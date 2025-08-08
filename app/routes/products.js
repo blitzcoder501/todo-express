@@ -2,11 +2,22 @@ const express = require('express')
 const router = express.Router()
 const Product = require('../models/Product')
 
-// GET /products — получить все или отфильтрованные по категории
+// GET /products — получить все или отфильтрованные по категории и/или поиску
 router.get('/', async (req, res) => {
 	try {
-		const { category } = req.query
-		const filter = category ? { category } : {}
+		const { category, search } = req.query
+		const filter = {}
+
+		// фильтр по категории
+		if (category) {
+			filter.category = category
+		}
+
+		// фильтр по поиску в названии (регистронезависимый)
+		if (search) {
+			filter.title = { $regex: search, $options: 'i' }
+		}
+
 		const products = await Product.find(filter).sort({ publishedAt: -1 })
 		res.json(products)
 	} catch (err) {
